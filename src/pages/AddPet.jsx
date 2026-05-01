@@ -157,7 +157,7 @@ export default function AddPet() {
           name:               formData.name.trim(),
           animal_type:        formData.animal_type,
           breed:              formData.breed?.trim()              || null,
-          age:                formData.birth_date                 || null,
+          birth_date:        formData.birth_date              || null,
           chip_number:        formData.chip_number?.trim()        || null,
           medical_conditions: formData.medical_conditions?.trim() || null,
           surgeries:          formData.surgeries?.trim()          || null,

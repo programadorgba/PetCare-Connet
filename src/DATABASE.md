@@ -69,11 +69,10 @@ Mascotas vinculadas al usuario dueño.
 | `chip_number` | TEXT | Número de microchip |
 | `photo_url` | TEXT | URL foto en Storage bucket `pets` |
 | `medical_conditions` | TEXT | Condiciones médicas conocidas |
-| `surgeries_notes` | TEXT | Notas generales de cirugías |
-| `deworming_notes` | TEXT | Notas generales de desparasitación |
+| `surgeries` | TEXT | Notas de cirugías |
+| `deworming` | TEXT | Notas de desparasitación |
 | `additional_notes` | TEXT | Notas adicionales del dueño |
 | `created_at` | TIMESTAMPTZ | Fecha de creación |
-| `updated_at` | TIMESTAMPTZ | Última actualización |
 
 ---
 

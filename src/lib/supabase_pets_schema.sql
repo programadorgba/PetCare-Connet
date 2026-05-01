@@ -8,7 +8,7 @@ CREATE TABLE public.pets (
     name TEXT NOT NULL,
     animal_type TEXT NOT NULL,
     breed TEXT,
-    age TEXT,
+    birth_date DATE,
     chip_number TEXT,
     photo_url TEXT,
     medical_conditions TEXT,
