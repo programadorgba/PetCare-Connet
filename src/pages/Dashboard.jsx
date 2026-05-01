@@ -208,7 +208,7 @@ export default function Dashboard() {
                   {/* Info */}
                   <div style={{ flex: 1 }}>
                     <p style={{ fontWeight: 700, fontSize: 15, color: C.slateDark, margin: '0 0 2px' }}>{pet.name}</p>
-                    <p style={{ fontSize: 12, color: C.gray, margin: '0 0 8px' }}>{pet.breed || pet.animal_type} • {pet.birth_date || 'Sin fecha de nacimiento'}</p>
+                    <p style={{ fontSize: 12, color: C.gray, margin: '0 0 8px' }}>{pet.breed || pet.animal_type} • {pet.age || 'Sin edad'}</p>
                     <div style={{ display: 'flex', gap: 14, flexWrap: 'wrap' }}>
                       <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: C.slate }}>
                         <Heart size={12} color={C.teal} /> Salud: {pet.medical_conditions ? 'Con condiciones' : 'Ok'}

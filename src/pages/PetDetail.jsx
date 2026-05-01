@@ -174,7 +174,7 @@ export default function PetDetail() {
                 {pet.name}
               </h1>
               <p style={{ fontSize: 13, color: C.gray, margin: 0 }}>
-                {pet.breed || pet.animal_type} • {pet.birth_date || 'Sin fecha de nacimiento'}
+                {pet.breed || pet.animal_type} • {pet.age || 'Sin edad'}
               </p>
             </div>
           </div>
@@ -225,7 +225,7 @@ export default function PetDetail() {
                   <Field label="Nombre" value={pet.name} />
                   <Field label="Tipo" value={pet.animal_type} />
                   <Field label="Raza" value={pet.breed} />
-                  <Field label="Fecha de nacimiento" value={pet.birth_date} />
+                  <Field label="Edad" value={pet.age} />
                 </div>
                 <Field label="Número de chip" value={pet.chip_number} />
               </Section>

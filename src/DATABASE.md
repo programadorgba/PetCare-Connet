@@ -65,7 +65,7 @@ Mascotas vinculadas al usuario dueño.
 | `name` | TEXT | Nombre de la mascota |
 | `animal_type` | TEXT | `dog` `cat` `bird` `rabbit` `fish` `other` |
 | `breed` | TEXT | Raza |
-| `birth_date` | DATE | Fecha de nacimiento |
+| `age` | TEXT | Edad o fecha de nacimiento |
 | `chip_number` | TEXT | Número de microchip |
 | `photo_url` | TEXT | URL foto en Storage bucket `pets` |
 | `medical_conditions` | TEXT | Condiciones médicas conocidas |
