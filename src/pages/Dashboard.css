@@ -1,0 +1,338 @@
+/* ─── Dashboard.css ──────────────────────────────────────────────────────────
+   Variables compartidas con el resto de la app
+   ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --teal:         #1D9E75;
+  --teal-light:   #E1F5EE;
+  --teal-mid:     #5DCAA5;
+  --orange:       #E07B3F;
+  --orange-light: #FDEEDE;
+  --amber:        #F7C34A;
+  --slate:        #3D4E4B;
+  --slate-dark:   #2C3836;
+  --gray:         #7A8A87;
+  --gray-bg:      #F4F6F5;
+  --white:        #FFFFFF;
+  --red:          #E24B4A;
+  --red-light:    #FCEBEB;
+  --border:       #EEF2F0;
+}
+
+/* ─── Layout ──────────────────────────────────────────────────────────────── */
+.dashboard-wrapper {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+}
+
+.dashboard-main {
+  flex: 1;
+  overflow: auto;
+  padding: 28px;
+}
+
+.dashboard-aside {
+  width: 288px;
+  flex-shrink: 0;
+  overflow: auto;
+  padding: 28px 20px 28px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ─── Action cards ────────────────────────────────────────────────────────── */
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 32px;
+}
+
+.action-card {
+  border-radius: 18px;
+  padding: 28px 20px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.action-card__icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-card__title {
+  font-weight: 700;
+  font-size: 15px;
+  color: white;
+  margin: 0;
+}
+
+.action-card__sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+/* ─── Section header ──────────────────────────────────────────────────────── */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--slate-dark);
+}
+
+.section-link {
+  font-size: 13px;
+  color: var(--teal);
+  cursor: pointer;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ─── Pet cards ───────────────────────────────────────────────────────────── */
+.pet-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+  margin-bottom: 12px;
+}
+
+.pet-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.pet-avatar__img {
+  width: 62px;
+  height: 62px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.pet-avatar__emoji {
+  width: 62px;
+  height: 62px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+}
+
+.pet-info {
+  flex: 1;
+}
+
+.pet-info__name {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--slate-dark);
+  margin: 0 0 2px;
+}
+
+.pet-info__breed {
+  font-size: 12px;
+  color: var(--gray);
+  margin: 0 0 8px;
+}
+
+.pet-info__stats {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.pet-info__stat {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--slate);
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  background: var(--white);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.empty-state__text {
+  color: var(--gray);
+  margin-bottom: 16px;
+}
+
+.empty-state__btn {
+  padding: 10px 20px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.18s;
+}
+
+.empty-state__btn:hover { opacity: 0.9; }
+
+/* ─── Recordatorios ───────────────────────────────────────────────────────── */
+.reminder-card {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 18px;
+  border: 1px solid var(--border);
+}
+
+.reminder-card__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--slate-dark);
+  margin-bottom: 4px;
+}
+
+.reminder-card__sub {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gray);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #F0F4F2;
+}
+
+.reminder-item:last-of-type {
+  border-bottom: none;
+}
+
+.reminder-date {
+  width: 42px;
+  height: 46px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.reminder-date__month {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.reminder-date__day {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--slate-dark);
+  line-height: 1.1;
+}
+
+.reminder-info__name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--slate-dark);
+  margin: 0 0 2px;
+}
+
+.reminder-info__time {
+  font-size: 11px;
+  color: var(--gray);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.reminder-manage {
+  display: block;
+  text-align: center;
+  padding-top: 12px;
+  font-size: 13px;
+  color: var(--teal);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* ─── Tip de salud ────────────────────────────────────────────────────────── */
+.tip-card {
+  background: var(--teal-light);
+  border-radius: 16px;
+  padding: 16px 18px;
+  border: 1px solid rgba(93, 202, 165, 0.25);
+}
+
+.tip-card__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tip-card__title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--teal);
+}
+
+.tip-card__text {
+  font-size: 12px;
+  color: var(--slate);
+  line-height: 1.65;
+  margin: 0 0 10px;
+}
+
+.tip-card__link {
+  font-size: 12px;
+  color: var(--teal);
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ─── Loading ─────────────────────────────────────────────────────────────── */
+.loading-text {
+  text-align: center;
+  padding: 40px;
+  color: var(--gray);
+}

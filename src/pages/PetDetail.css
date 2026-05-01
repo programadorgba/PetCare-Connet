@@ -1,0 +1,280 @@
+/* ─── PetDetail.css ──────────────────────────────────────────────────────────*/
+
+/* ─── Layout ──────────────────────────────────────────────────────────────── */
+.petdetail-wrapper {
+  flex: 1;
+  overflow: auto;
+  padding: 28px;
+}
+
+.petdetail-inner {
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+/* ─── Header ──────────────────────────────────────────────────────────────── */
+.petdetail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.petdetail-back-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--slate);
+  flex-shrink: 0;
+}
+
+.petdetail-avatar-img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.petdetail-avatar-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: var(--teal-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.petdetail-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--slate-dark);
+  margin: 0;
+}
+
+.petdetail-breed {
+  font-size: 13px;
+  color: var(--gray);
+  margin: 0;
+}
+
+/* ─── Tabs ────────────────────────────────────────────────────────────────── */
+.petdetail-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.petdetail-tab {
+  flex: 1;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.petdetail-tab.active {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.petdetail-tab__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray);
+}
+
+.petdetail-tab.active .petdetail-tab__label {
+  color: white;
+}
+
+/* ─── Sections ────────────────────────────────────────────────────────────── */
+.petdetail-section {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 20px 24px;
+  border: 1px solid #EEF2F0;
+  margin-bottom: 16px;
+}
+
+.petdetail-section__title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--slate-dark);
+  margin-bottom: 16px;
+}
+
+/* ─── Fields ──────────────────────────────────────────────────────────────── */
+.petdetail-field {
+  margin-bottom: 16px;
+}
+
+.petdetail-field__label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray);
+  display: block;
+  margin-bottom: 4px;
+}
+
+.petdetail-field__value {
+  font-size: 14px;
+  color: var(--slate-dark);
+}
+
+.petdetail-fields-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 24px;
+}
+
+/* ─── Documents ───────────────────────────────────────────────────────────── */
+.petdetail-doc-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: var(--gray-bg);
+  border-radius: 12px;
+  margin-bottom: 10px;
+}
+
+.petdetail-doc-item__name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate-dark);
+  margin: 0;
+}
+
+.petdetail-doc-item__meta {
+  font-size: 12px;
+  color: var(--gray);
+  margin: 0;
+}
+
+.petdetail-docs-empty {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.petdetail-docs-empty__text {
+  font-size: 14px;
+  color: var(--gray);
+  margin-bottom: 8px;
+}
+
+.petdetail-docs-empty__hint {
+  font-size: 12px;
+  color: var(--gray);
+  line-height: 1.6;
+}
+
+/* ─── Actions ─────────────────────────────────────────────────────────────── */
+.petdetail-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid #EEF2F0;
+}
+
+.petdetail-btn-edit {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: var(--teal);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(29,158,117,0.30);
+  font-family: inherit;
+  transition: opacity 0.18s;
+}
+
+.petdetail-btn-edit:hover { opacity: 0.9; }
+
+.petdetail-btn-edit__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: white;
+}
+
+.petdetail-btn-delete {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  background: var(--white);
+  border: 1.5px solid var(--red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.18s;
+}
+
+.petdetail-btn-delete:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.petdetail-btn-delete:hover:not(:disabled) { opacity: 0.85; }
+
+.petdetail-btn-delete__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--red);
+}
+
+/* ─── States ──────────────────────────────────────────────────────────────── */
+.petdetail-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.petdetail-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.petdetail-error__text {
+  color: var(--red);
+  font-size: 14px;
+}
+
+.petdetail-error__btn {
+  padding: 10px 20px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { animation: spin 0.8s linear infinite; }

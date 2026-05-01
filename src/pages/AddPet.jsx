@@ -6,27 +6,18 @@ import { z } from 'zod'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   PawPrint, Camera, ChevronLeft, ChevronRight,
-  Dog, Cat, Bird, Rabbit, Fish,
   Calendar, Hash, Heart, FileText,
-  Loader2, CheckCircle2, AlertCircle, Upload, X
+  Loader2, CheckCircle2, AlertCircle, Upload, X,
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import './AddPet.css'
 
-// ─── Colores ──────────────────────────────────────────────────────────────────
-const C = {
-  teal: '#1D9E75', tealLight: '#E1F5EE', tealMid: '#5DCAA5',
-  orange: '#E07B3F', orangeLight: '#FDEEDE',
-  slate: '#3D4E4B', slateDark: '#2C3836',
-  gray: '#7A8A87', grayBg: '#F4F6F5', white: '#FFFFFF',
-  red: '#E24B4A', redLight: '#FCEBEB',
-  border: '#DDE6E2',
-}
-
-// ─── Validación con Zod ───────────────────────────────────────────────────────
+// ─── Validación Zod ───────────────────────────────────────────────────────────
 const petSchema = z.object({
   name:               z.string().min(1, 'El nombre es obligatorio').max(50),
-  animal_type:        z.string().min(1, 'Selecciona un tipo de animal'),
+  animal_type:        z.string().min(1, 'Indica el tipo de animal').max(50),
+  sex:                z.string().min(1, 'Selecciona el sexo'),
   breed:              z.string().max(60).optional(),
   birth_date:         z.string().optional(),
   chip_number:        z.string().max(20).optional(),
@@ -36,37 +27,30 @@ const petSchema = z.object({
   additional_notes:   z.string().max(500).optional(),
 })
 
-// ─── Tipos de animales ────────────────────────────────────────────────────────
-const ANIMAL_TYPES = [
-  { value: 'dog',    label: 'Perro',    Icon: Dog   },
-  { value: 'cat',    label: 'Gato',     Icon: Cat   },
-  { value: 'bird',   label: 'Pájaro',   Icon: Bird  },
-  { value: 'rabbit', label: 'Conejo',   Icon: Rabbit },
-  { value: 'fish',   label: 'Pez',      Icon: Fish  },
-  { value: 'other',  label: 'Otro',     Icon: PawPrint },
-]
-
-// ─── Pasos del formulario ─────────────────────────────────────────────────────
+// ─── Pasos ────────────────────────────────────────────────────────────────────
 const STEPS = [
-  { id: 1, label: 'Datos básicos',  icon: PawPrint },
-  { id: 2, label: 'Salud',          icon: Heart    },
-  { id: 3, label: 'Documentos',     icon: FileText },
+  { id: 1, label: 'Datos básicos', Icon: PawPrint },
+  { id: 2, label: 'Salud',         Icon: Heart    },
+  { id: 3, label: 'Notas',         Icon: FileText },
 ]
 
-// ─── Componente Field ─────────────────────────────────────────────────────────
-function Field({ label, error, hint, children }) {
+// ─── Field wrapper ────────────────────────────────────────────────────────────
+function Field({ label, hint, error, children }) {
   return (
-    <div style={{ marginBottom: 18 }}>
-      <label style={{ fontSize: 13, fontWeight: 600, color: C.slate, display: 'block', marginBottom: 6 }}>
+    <div className="mb-4">
+      <label className="block text-sm font-semibold mb-1.5" style={{ color: 'var(--slate)' }}>
         {label}
-        {hint && <span style={{ fontWeight: 400, color: C.gray, marginLeft: 6 }}>{hint}</span>}
+        {hint && <span className="font-normal ml-1.5" style={{ color: 'var(--gray)' }}>{hint}</span>}
       </label>
       {children}
       <AnimatePresence>
         {error && (
-          <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-            style={{ fontSize: 12, color: C.red, marginTop: 4, display: 'flex', alignItems: 'center', gap: 4 }}>
-            <AlertCircle size={12} /> {error}
+          <motion.p
+            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+            className="flex items-center gap-1 mt-1 text-xs"
+            style={{ color: 'var(--red)' }}
+          >
+            <AlertCircle size={11} /> {error}
           </motion.p>
         )}
       </AnimatePresence>
@@ -74,32 +58,17 @@ function Field({ label, error, hint, children }) {
   )
 }
 
-// ─── Input estilo ─────────────────────────────────────────────────────────────
-const inputStyle = (hasError) => ({
-  width: '100%', padding: '11px 14px',
-  border: `1.5px solid ${hasError ? C.red : C.border}`,
-  borderRadius: 10, fontSize: 14, color: C.slateDark,
-  outline: 'none', background: hasError ? C.redLight : C.white,
-  transition: 'all 0.18s', boxSizing: 'border-box',
-  fontFamily: 'inherit',
-})
-
-const textareaStyle = (hasError) => ({
-  ...inputStyle(hasError),
-  resize: 'vertical', minHeight: 90, lineHeight: 1.6,
-})
-
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function AddPet() {
   const { user }  = useAuth()
   const navigate  = useNavigate()
 
-  const [step, setStep]           = useState(1)
-  const [photoFile, setPhotoFile] = useState(null)
+  const [step, setStep]                 = useState(1)
+  const [photoFile, setPhotoFile]       = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
-  const [saving, setSaving]       = useState(false)
-  const [saveError, setSaveError] = useState('')
-  const [success, setSuccess]     = useState(false)
+  const [saving, setSaving]             = useState(false)
+  const [saveError, setSaveError]       = useState('')
+  const [success, setSuccess]           = useState(false)
   const fileInputRef = useRef()
 
   const { register, handleSubmit, watch, setValue, trigger,
@@ -108,60 +77,53 @@ export default function AddPet() {
     mode: 'onChange',
   })
 
-  const selectedType = watch('animal_type')
+  const selectedSex = watch('sex')
 
-  // ── Seleccionar foto ────────────────────────────────────────────────────────
+  // ── Foto ────────────────────────────────────────────────────────────────────
   const handlePhoto = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) {
-      setSaveError('La foto no puede superar 5 MB'); return
-    }
+    if (file.size > 5 * 1024 * 1024) { setSaveError('La foto no puede superar 5 MB'); return }
     setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
   }
 
-  // ── Avanzar paso (valida solo los campos del paso actual) ───────────────────
+  // ── Siguiente paso ──────────────────────────────────────────────────────────
   const nextStep = async () => {
-    const fieldsStep1 = ['name', 'animal_type']
+    const fieldsStep1 = ['name', 'animal_type', 'sex']
     const ok = step === 1 ? await trigger(fieldsStep1) : true
     if (ok) setStep(s => s + 1)
   }
 
-  // ── Subir foto a Supabase Storage ───────────────────────────────────────────
+  // ── Subir foto ──────────────────────────────────────────────────────────────
   const uploadPhoto = async (petId) => {
     if (!photoFile) return null
     const ext  = photoFile.name.split('.').pop()
-    const path = `${user.id}/${petId}.${ext}`   // carpeta = uid del usuario
-
-    const { error } = await supabase.storage
-      .from('pets')
-      .upload(path, photoFile, { upsert: true })
-
+    const path = `${user.id}/${petId}.${ext}`
+    const { error } = await supabase.storage.from('pets').upload(path, photoFile, { upsert: true })
     if (error) throw new Error('Error al subir la foto: ' + error.message)
-
     const { data } = supabase.storage.from('pets').getPublicUrl(path)
     return data.publicUrl
   }
 
-  // ── Guardar mascota ─────────────────────────────────────────────────────────
+  // ── Guardar ─────────────────────────────────────────────────────────────────
   const onSubmit = async (formData) => {
     setSaving(true)
     setSaveError('')
     try {
-      // 1. Insertar la mascota (sin foto aún, para obtener el id)
       const { data: pet, error: insertError } = await supabase
         .from('pets')
         .insert({
           user_id:            user.id,
           name:               formData.name.trim(),
-          animal_type:        formData.animal_type,
+          animal_type:        formData.animal_type.trim(),
+          sex:                formData.sex,
           breed:              formData.breed?.trim()              || null,
-          age:                formData.birth_date                 || null,
+          birth_date:         formData.birth_date                 || null,
           chip_number:        formData.chip_number?.trim()        || null,
           medical_conditions: formData.medical_conditions?.trim() || null,
-          surgeries:          formData.surgeries?.trim()          || null,
-          deworming:          formData.deworming?.trim()          || null,
+          surgeries_notes:    formData.surgeries?.trim()          || null,
+          deworming_notes:    formData.deworming?.trim()          || null,
           additional_notes:   formData.additional_notes?.trim()   || null,
         })
         .select()
@@ -169,7 +131,6 @@ export default function AddPet() {
 
       if (insertError) throw new Error(insertError.message)
 
-      // 2. Subir foto si hay y actualizar photo_url
       if (photoFile) {
         const photoUrl = await uploadPhoto(pet.id)
         await supabase.from('pets').update({ photo_url: photoUrl }).eq('id', pet.id)
@@ -177,7 +138,6 @@ export default function AddPet() {
 
       setSuccess(true)
       setTimeout(() => navigate('/dashboard'), 1800)
-
     } catch (err) {
       setSaveError(err.message || 'Error al guardar la mascota')
     } finally {
@@ -185,207 +145,165 @@ export default function AddPet() {
     }
   }
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  // Pantalla de éxito
+  // ── Pantalla éxito ──────────────────────────────────────────────────────────
   if (success) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div className="flex-1 flex items-center justify-center">
         <motion.div
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
-          style={{ textAlign: 'center' }}
+          className="text-center"
         >
           <motion.div
             initial={{ scale: 0 }} animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 250 }}
-            style={{
-              width: 80, height: 80, borderRadius: '50%',
-              background: C.tealLight, margin: '0 auto 20px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="success-icon"
           >
-            <CheckCircle2 size={42} color={C.teal} />
+            <CheckCircle2 size={42} color="var(--teal)" />
           </motion.div>
-          <h2 style={{ fontSize: 22, fontWeight: 700, color: C.slateDark, marginBottom: 8 }}>
+          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--slate-dark)' }}>
             ¡Mascota añadida! 🎉
           </h2>
-          <p style={{ color: C.gray, fontSize: 14 }}>Volviendo al dashboard...</p>
+          <p className="text-sm" style={{ color: 'var(--gray)' }}>Volviendo al dashboard...</p>
         </motion.div>
       </div>
     )
   }
 
+  // ── Render principal ────────────────────────────────────────────────────────
   return (
-    <div style={{ flex: 1, overflow: 'auto', padding: '28px 28px' }}>
-      <div style={{ maxWidth: 680, margin: '0 auto' }}>
+    <div className="flex-1 overflow-auto p-7">
+      <div className="max-w-xl mx-auto">
 
-        {/* ── Header ─────────────────────────────────────────────── */}
+        {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}
+          className="flex items-center gap-3 mb-7"
         >
           <motion.button
             whileHover={{ x: -3 }} whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/dashboard')}
-            style={{
-              width: 36, height: 36, borderRadius: '50%',
-              background: C.white, border: `1px solid ${C.border}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', color: C.slate,
-            }}
+            className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+            style={{ background: 'var(--white)', border: '1px solid var(--border)', color: 'var(--slate)' }}
           >
             <ChevronLeft size={18} />
           </motion.button>
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: C.slateDark, margin: 0 }}>
+            <h1 className="text-xl font-bold m-0" style={{ color: 'var(--slate-dark)' }}>
               Añadir mascota
             </h1>
-            <p style={{ fontSize: 13, color: C.gray, margin: 0 }}>
+            <p className="text-xs m-0" style={{ color: 'var(--gray)' }}>
               Rellena los datos de tu nuevo compañero
             </p>
           </div>
         </motion.div>
 
-        {/* ── Stepper ────────────────────────────────────────────── */}
+        {/* Stepper */}
         <motion.div
           initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-          style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}
+          className="flex items-center mb-7"
         >
           {STEPS.map((s, i) => (
-            <div key={s.id} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-                <div style={{
-                  width: 32, height: 32, borderRadius: '50%',
-                  background: step >= s.id ? C.teal : '#E8EDEB',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.3s',
-                }}>
+            <div key={s.id} className="flex items-center" style={{ flex: i < STEPS.length - 1 ? 1 : 0 }}>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className={`step-circle ${step >= s.id ? 'active' : ''}`}>
                   {step > s.id
                     ? <CheckCircle2 size={16} color="white" />
-                    : <s.icon size={15} color={step >= s.id ? 'white' : C.gray} />
+                    : <s.Icon size={15} color={step >= s.id ? 'white' : 'var(--gray)'} />
                   }
                 </div>
-                <span style={{
-                  fontSize: 13, fontWeight: step === s.id ? 600 : 400,
-                  color: step >= s.id ? C.slateDark : C.gray,
-                  display: window.innerWidth < 500 ? 'none' : 'block',
-                }}>
+                <span
+                  className="text-sm hidden sm:block"
+                  style={{
+                    fontWeight: step === s.id ? 600 : 400,
+                    color: step >= s.id ? 'var(--slate-dark)' : 'var(--gray)',
+                  }}
+                >
                   {s.label}
                 </span>
               </div>
               {i < STEPS.length - 1 && (
-                <div style={{
-                  flex: 1, height: 2, margin: '0 12px',
-                  background: step > s.id ? C.teal : '#E8EDEB',
-                  transition: 'background 0.3s',
-                }} />
+                <div className={`step-line ${step > s.id ? 'done' : ''}`} />
               )}
             </div>
           ))}
         </motion.div>
 
-        {/* ── Card del formulario ─────────────────────────────────── */}
+        {/* Card */}
         <motion.div
           key={step}
-          initial={{ opacity: 0, x: 24 }}
+          initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -24 }}
-          transition={{ duration: 0.3 }}
-          style={{
-            background: C.white, borderRadius: 20,
-            padding: '32px 36px', border: `1px solid #EEF2F0`,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.06)',
-          }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.28 }}
+          className="pet-card"
         >
 
-          {/* ── PASO 1: Datos básicos ──────────────────────────────── */}
+          {/* ── PASO 1 ── */}
           {step === 1 && (
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: C.slateDark, marginBottom: 24 }}>
+              <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
                 Datos básicos
               </h2>
 
               {/* Foto */}
-              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 28 }}>
-                <div style={{ position: 'relative' }}>
-                  <div
-                    onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      width: 100, height: 100, borderRadius: '50%',
-                      background: photoPreview ? 'transparent' : C.tealLight,
-                      border: `2px dashed ${C.tealMid}`,
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center',
-                      cursor: 'pointer', overflow: 'hidden',
-                      transition: 'border-color 0.2s',
-                    }}
-                  >
+              <div className="flex justify-center mb-7">
+                <div className="relative">
+                  <div className="photo-circle" onClick={() => fileInputRef.current?.click()}>
                     {photoPreview
-                      ? <img src={photoPreview} alt="preview"
-                          style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      ? <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
                       : <>
-                          <Camera size={24} color={C.teal} />
-                          <span style={{ fontSize: 10, color: C.teal, marginTop: 4, fontWeight: 600 }}>
-                            Foto
-                          </span>
+                          <Camera size={24} color="var(--teal)" />
+                          <span className="text-xs mt-1 font-semibold" style={{ color: 'var(--teal)' }}>Foto</span>
                         </>
                     }
                   </div>
                   {photoPreview && (
-                    <button
-                      type="button"
-                      onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
-                      style={{
-                        position: 'absolute', top: 0, right: 0,
-                        width: 22, height: 22, borderRadius: '50%',
-                        background: C.red, border: '2px solid white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        cursor: 'pointer', color: 'white',
-                      }}
-                    >
+                    <button type="button" className="photo-delete"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}>
                       <X size={11} />
                     </button>
                   )}
                   <input ref={fileInputRef} type="file" accept="image/*"
-                    onChange={handlePhoto} style={{ display: 'none' }} />
+                    onChange={handlePhoto} className="hidden" />
                 </div>
               </div>
 
               {/* Nombre */}
               <Field label="Nombre *" error={errors.name?.message}>
-                <input {...register('name')} type="text" placeholder="Ej: Luna"
-                  style={inputStyle(!!errors.name)}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = errors.name ? C.red : C.border; e.target.style.boxShadow = 'none' }}
+                <input
+                  {...register('name')}
+                  type="text" placeholder="Ej: Luna"
+                  className={`pet-input ${errors.name ? 'error' : ''}`}
                 />
               </Field>
 
-              {/* Tipo de animal */}
+              {/* Tipo de animal — texto libre */}
               <Field label="Tipo de animal *" error={errors.animal_type?.message}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
-                  {ANIMAL_TYPES.map(({ value, label, Icon }) => (
+                <input
+                  {...register('animal_type')}
+                  type="text"
+                  placeholder="Ej: Perro, Gato, Serpiente, Tortuga..."
+                  className={`pet-input ${errors.animal_type ? 'error' : ''}`}
+                />
+              </Field>
+
+              {/* Sexo */}
+              <Field label="Sexo *" error={errors.sex?.message}>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: 'male',   label: 'Macho',  symbol: '♂' },
+                    { value: 'female', label: 'Hembra', symbol: '♀' },
+                  ].map(({ value, label, symbol }) => (
                     <motion.button
                       key={value} type="button"
-                      whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}
-                      onClick={() => setValue('animal_type', value, { shouldValidate: true })}
-                      style={{
-                        padding: '12px 8px', borderRadius: 12, cursor: 'pointer',
-                        border: `2px solid ${selectedType === value ? C.teal : C.border}`,
-                        background: selectedType === value ? C.tealLight : C.white,
-                        display: 'flex', flexDirection: 'column',
-                        alignItems: 'center', gap: 6,
-                        transition: 'all 0.18s',
-                      }}
+                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      onClick={() => setValue('sex', value, { shouldValidate: true })}
+                      className={`sex-btn ${selectedSex === value ? 'selected' : ''}`}
                     >
-                      <Icon size={22} color={selectedType === value ? C.teal : C.gray} />
-                      <span style={{ fontSize: 12, fontWeight: 600,
-                        color: selectedType === value ? C.teal : C.slate }}>
-                        {label}
-                      </span>
+                      <span className="text-lg">{symbol}</span>
+                      {label}
                     </motion.button>
                   ))}
                 </div>
@@ -393,38 +311,34 @@ export default function AddPet() {
 
               {/* Raza */}
               <Field label="Raza" hint="(opcional)">
-                <input {...register('breed')} type="text" placeholder="Ej: Golden Retriever"
-                  style={inputStyle(false)}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                <input
+                  {...register('breed')}
+                  type="text" placeholder="Ej: Golden Retriever"
+                  className="pet-input"
                 />
               </Field>
 
-              {/* Fecha de nacimiento y chip */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {/* Fecha nacimiento + Chip */}
+              <div className="grid grid-cols-2 gap-4">
                 <Field label="Fecha de nacimiento" hint="(aprox.)">
-                  <div style={{ position: 'relative' }}>
-                    <Calendar size={15} color={C.gray} style={{
-                      position: 'absolute', left: 12, top: '50%',
-                      transform: 'translateY(-50%)', pointerEvents: 'none',
-                    }} />
-                    <input {...register('birth_date')} type="date"
-                      style={{ ...inputStyle(false), paddingLeft: 36 }}
-                      onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                      onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                  <div className="relative">
+                    <Calendar size={15} color="var(--gray)"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      {...register('birth_date')}
+                      type="date"
+                      className="pet-input pet-input-icon"
                     />
                   </div>
                 </Field>
                 <Field label="Nº de chip" hint="(opcional)">
-                  <div style={{ position: 'relative' }}>
-                    <Hash size={15} color={C.gray} style={{
-                      position: 'absolute', left: 12, top: '50%',
-                      transform: 'translateY(-50%)', pointerEvents: 'none',
-                    }} />
-                    <input {...register('chip_number')} type="text" placeholder="123456789"
-                      style={{ ...inputStyle(false), paddingLeft: 36 }}
-                      onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                      onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                  <div className="relative">
+                    <Hash size={15} color="var(--gray)"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <input
+                      {...register('chip_number')}
+                      type="text" placeholder="123456789"
+                      className="pet-input pet-input-icon"
                     />
                   </div>
                 </Field>
@@ -432,132 +346,110 @@ export default function AddPet() {
             </div>
           )}
 
-          {/* ── PASO 2: Salud ──────────────────────────────────────── */}
+          {/* ── PASO 2 ── */}
           {step === 2 && (
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: C.slateDark, marginBottom: 24 }}>
+              <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
                 Información médica
               </h2>
 
               <Field label="Condiciones médicas" hint="(alergias, enfermedades crónicas...)">
-                <textarea {...register('medical_conditions')}
+                <textarea
+                  {...register('medical_conditions')}
                   placeholder="Ej: Alérgico al pollo, hipotiroidismo diagnosticado en 2023..."
-                  style={textareaStyle(false)}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                  className="pet-input"
                 />
               </Field>
 
               <Field label="Cirugías" hint="(intervenciones anteriores)">
-                <textarea {...register('surgeries')}
+                <textarea
+                  {...register('surgeries')}
                   placeholder="Ej: Esterilización (Marzo 2022), extracción pieza dental (2023)..."
-                  style={textareaStyle(false)}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                  className="pet-input"
                 />
               </Field>
 
               <Field label="Desparasitación" hint="(última y periodicidad)">
-                <textarea {...register('deworming')}
-                  placeholder="Ej: Última interna: Enero 2024 (Milbemax). Externa: cada 3 meses (Frontline)..."
-                  style={{ ...textareaStyle(false), minHeight: 72 }}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+                <textarea
+                  {...register('deworming')}
+                  placeholder="Ej: Última interna: Enero 2024. Externa: cada 3 meses..."
+                  className="pet-input"
+                  style={{ minHeight: 72 }}
                 />
               </Field>
             </div>
           )}
 
-          {/* ── PASO 3: Documentos y notas ────────────────────────── */}
+          {/* ── PASO 3 ── */}
           {step === 3 && (
             <div>
-              <h2 style={{ fontSize: 16, fontWeight: 700, color: C.slateDark, marginBottom: 24 }}>
+              <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
                 Notas adicionales
               </h2>
 
-              <Field label="Notas adicionales" hint="(cualquier info que quieras recordar)">
-                <textarea {...register('additional_notes')}
-                  placeholder="Ej: Le da miedo el trueno, come 2 veces al día, le gusta el juguete azul..."
-                  style={{ ...textareaStyle(false), minHeight: 120 }}
-                  onFocus={e => { e.target.style.borderColor = C.teal; e.target.style.boxShadow = `0 0 0 3px ${C.tealLight}` }}
-                  onBlur={e  => { e.target.style.borderColor = C.border; e.target.style.boxShadow = 'none' }}
+              <Field label="Notas" hint="(cualquier info que quieras recordar)">
+                <textarea
+                  {...register('additional_notes')}
+                  placeholder="Ej: Le da miedo el trueno, come 2 veces al día..."
+                  className="pet-input"
+                  style={{ minHeight: 120 }}
                 />
               </Field>
 
-              {/* Info sobre documentos */}
-              <div style={{
-                background: C.tealLight, borderRadius: 12,
-                padding: '14px 16px', border: `1px solid ${C.tealMid}40`,
-                display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 8,
-              }}>
-                <Upload size={18} color={C.teal} style={{ flexShrink: 0, marginTop: 2 }} />
+              {/* Info documentos */}
+              <div className="info-box mb-2">
+                <Upload size={18} color="var(--teal)" className="flex-shrink-0 mt-0.5" />
                 <div>
-                  <p style={{ fontSize: 13, fontWeight: 600, color: C.teal, margin: '0 0 2px' }}>
+                  <p className="text-sm font-semibold m-0 mb-0.5" style={{ color: 'var(--teal)' }}>
                     Documentos veterinarios
                   </p>
-                  <p style={{ fontSize: 12, color: C.slate, margin: 0, lineHeight: 1.6 }}>
+                  <p className="text-xs m-0 leading-relaxed" style={{ color: 'var(--slate)' }}>
                     Podrás subir analíticas, informes y radiografías desde la ficha de la mascota una vez creada.
                   </p>
                 </div>
               </div>
 
               {/* Resumen */}
-              <div style={{
-                background: C.grayBg, borderRadius: 12,
-                padding: '14px 16px', marginTop: 16,
-              }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: C.gray,
-                  textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>
+              <div className="summary-box">
+                <p className="text-xs font-bold uppercase tracking-wider mb-2.5" style={{ color: 'var(--gray)' }}>
                   Resumen
                 </p>
                 {[
                   { label: 'Nombre',  value: watch('name')        },
                   { label: 'Animal',  value: watch('animal_type') },
+                  { label: 'Sexo',    value: watch('sex') === 'male' ? 'Macho ♂' : watch('sex') === 'female' ? 'Hembra ♀' : '' },
                   { label: 'Raza',    value: watch('breed')       },
-                  { label: 'Foto',    value: photoFile ? '✅ Añadida' : '—' },
-                ].map(({ label, value }) => value ? (
-                  <div key={label} style={{ display: 'flex', justifyContent: 'space-between',
-                    fontSize: 13, marginBottom: 6 }}>
-                    <span style={{ color: C.gray }}>{label}</span>
-                    <span style={{ fontWeight: 600, color: C.slateDark }}>{value}</span>
+                  { label: 'Foto',    value: photoFile ? '✅ Añadida' : ''  },
+                ].filter(r => r.value).map(({ label, value }) => (
+                  <div key={label} className="summary-row">
+                    <span style={{ color: 'var(--gray)' }}>{label}</span>
+                    <span className="font-semibold" style={{ color: 'var(--slate-dark)' }}>{value}</span>
                   </div>
-                ) : null)}
+                ))}
               </div>
             </div>
           )}
 
-          {/* ── Error global ───────────────────────────────────────── */}
+          {/* Error global */}
           <AnimatePresence>
             {saveError && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  background: C.redLight, border: `1px solid ${C.red}33`,
-                  borderRadius: 10, padding: '10px 14px', marginTop: 16,
-                  fontSize: 13, color: C.red,
-                }}
+                className="error-banner"
               >
-                <AlertCircle size={15} color={C.red} /> {saveError}
+                <AlertCircle size={15} color="var(--red)" /> {saveError}
               </motion.div>
             )}
           </AnimatePresence>
 
-          {/* ── Botones de navegación ──────────────────────────────── */}
-          <div style={{
-            display: 'flex', justifyContent: 'space-between',
-            alignItems: 'center', marginTop: 28, paddingTop: 20,
-            borderTop: `1px solid #F0F4F2`,
-          }}>
+          {/* Navegación */}
+          <div className="flex justify-between items-center mt-7 pt-5"
+            style={{ borderTop: '1px solid #F0F4F2' }}>
+
             {step > 1 ? (
               <motion.button type="button" whileHover={{ x: -2 }} whileTap={{ scale: 0.97 }}
                 onClick={() => setStep(s => s - 1)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '10px 18px', borderRadius: 10, cursor: 'pointer',
-                  border: `1.5px solid ${C.border}`, background: C.white,
-                  fontSize: 14, fontWeight: 600, color: C.slate,
-                }}
+                className="btn-prev"
               >
                 <ChevronLeft size={16} /> Anterior
               </motion.button>
@@ -566,34 +458,20 @@ export default function AddPet() {
             {step < STEPS.length ? (
               <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                 onClick={nextStep}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '10px 22px', borderRadius: 10, cursor: 'pointer',
-                  border: 'none', background: C.teal,
-                  fontSize: 14, fontWeight: 700, color: 'white',
-                  boxShadow: '0 4px 14px rgba(29,158,117,0.30)',
-                }}
+                className="btn-next"
               >
                 Siguiente <ChevronRight size={16} />
               </motion.button>
             ) : (
               <motion.button
-                type="button"
-                disabled={saving}
+                type="button" disabled={saving}
                 whileHover={{ scale: saving ? 1 : 1.02 }}
                 whileTap={{ scale: saving ? 1 : 0.97 }}
                 onClick={handleSubmit(onSubmit)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 8,
-                  padding: '11px 24px', borderRadius: 10, cursor: saving ? 'not-allowed' : 'pointer',
-                  border: 'none', background: saving ? C.tealMid : C.teal,
-                  fontSize: 14, fontWeight: 700, color: 'white',
-                  boxShadow: saving ? 'none' : '0 4px 16px rgba(29,158,117,0.35)',
-                  transition: 'background 0.2s',
-                }}
+                className="btn-save"
               >
                 {saving
-                  ? <><Loader2 size={17} style={{ animation: 'spin 0.8s linear infinite' }} /> Guardando...</>
+                  ? <><Loader2 size={17} className="spinning" /> Guardando...</>
                   : <><PawPrint size={17} /> Guardar mascota</>
                 }
               </motion.button>
@@ -601,8 +479,6 @@ export default function AddPet() {
           </div>
         </motion.div>
       </div>
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
     </div>
   )
 }

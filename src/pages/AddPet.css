@@ -1,0 +1,278 @@
+/* ─── AddPet.css ─────────────────────────────────────────────────────────────
+   Estilos del formulario de añadir mascota.
+   Complementa Tailwind con clases personalizadas donde hace falta.
+   ──────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --teal:         #1D9E75;
+  --teal-light:   #E1F5EE;
+  --teal-mid:     #5DCAA5;
+  --orange:       #E07B3F;
+  --orange-light: #FDEEDE;
+  --slate:        #3D4E4B;
+  --slate-dark:   #2C3836;
+  --gray:         #7A8A87;
+  --gray-bg:      #F4F6F5;
+  --white:        #FFFFFF;
+  --red:          #E24B4A;
+  --red-light:    #FCEBEB;
+  --border:       #DDE6E2;
+}
+
+/* ─── Inputs ──────────────────────────────────────────────────────────────── */
+.pet-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  color: var(--slate-dark);
+  outline: none;
+  background: var(--white);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+.pet-input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-light);
+}
+
+.pet-input.error {
+  border-color: var(--red);
+  background: var(--red-light);
+}
+
+.pet-input-icon {
+  padding-left: 36px;
+}
+
+textarea.pet-input {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.6;
+}
+
+/* ─── Selector de sexo ────────────────────────────────────────────────────── */
+.sex-btn {
+  padding: 12px 8px;
+  border-radius: 12px;
+  border: 2px solid var(--border);
+  background: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate);
+  cursor: pointer;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+}
+
+.sex-btn:hover {
+  border-color: var(--teal-mid);
+}
+
+.sex-btn.selected {
+  border-color: var(--teal);
+  background: var(--teal-light);
+  color: var(--teal);
+}
+
+/* ─── Stepper ─────────────────────────────────────────────────────────────── */
+.step-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #E8EDEB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s;
+  flex-shrink: 0;
+}
+
+.step-circle.active {
+  background: var(--teal);
+}
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  margin: 0 12px;
+  background: #E8EDEB;
+  transition: background 0.3s;
+}
+
+.step-line.done {
+  background: var(--teal);
+}
+
+/* ─── Card formulario ─────────────────────────────────────────────────────── */
+.pet-card {
+  background: var(--white);
+  border-radius: 20px;
+  padding: 32px 36px;
+  border: 1px solid #EEF2F0;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+}
+
+/* ─── Foto upload ─────────────────────────────────────────────────────────── */
+.photo-circle {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  background: var(--teal-light);
+  border: 2px dashed var(--teal-mid);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.photo-circle:hover {
+  border-color: var(--teal);
+}
+
+.photo-delete {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--red);
+  border: 2px solid white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: white;
+}
+
+/* ─── Botones nav ─────────────────────────────────────────────────────────── */
+.btn-prev {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--slate);
+  font-family: inherit;
+  transition: border-color 0.18s;
+}
+
+.btn-prev:hover { border-color: var(--teal-mid); }
+
+.btn-next {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  border: none;
+  background: var(--teal);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  font-family: inherit;
+  box-shadow: 0 4px 14px rgba(29,158,117,0.30);
+  transition: opacity 0.18s;
+}
+
+.btn-next:hover { opacity: 0.92; }
+
+.btn-save {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 24px;
+  border-radius: 10px;
+  border: none;
+  background: var(--teal);
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(29,158,117,0.35);
+  transition: background 0.2s;
+}
+
+.btn-save:disabled {
+  background: var(--teal-mid);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ─── Error banner ────────────────────────────────────────────────────────── */
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--red-light);
+  border: 1px solid rgba(226,75,74,0.2);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--red);
+}
+
+/* ─── Resumen ─────────────────────────────────────────────────────────────── */
+.summary-box {
+  background: var(--gray-bg);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 16px;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+/* ─── Info box ────────────────────────────────────────────────────────────── */
+.info-box {
+  background: var(--teal-light);
+  border-radius: 12px;
+  padding: 14px 16px;
+  border: 1px solid rgba(93,202,165,0.25);
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* ─── Success screen ──────────────────────────────────────────────────────── */
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--teal-light);
+  margin: 0 auto 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
