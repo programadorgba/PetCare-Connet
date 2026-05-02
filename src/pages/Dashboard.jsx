@@ -1,83 +1,116 @@
-import { motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
-  PawPrint, CalendarPlus, MessageCircle,
-  Heart, ChevronRight, MoreVertical,
-  TrendingUp, Clock,
-} from 'lucide-react'
-import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
-import './Dashboard.css'
+  PawPrint,
+  CalendarPlus,
+  MessageCircle,
+  Heart,
+  ChevronRight,
+  MoreVertical,
+  TrendingUp,
+  Clock,
+} from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../lib/supabaseClient";
+import { animalEmoji, animalGradient, animalTypeLabel, sexLabel, calcAge } from '../utils/petMaps'
+import "./Dashboard.css";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-const getPetEmoji = (type) => {
-  const map = { dog: '🐕', cat: '🐈', bird: '🐦', rabbit: '🐰', fish: '🐟' }
-  return map[type] || '🐾'
-}
-
-const getPetGradient = (type) => {
-  const map = {
-    dog:    'linear-gradient(135deg, #F5A86B, #E07B3F)',
-    cat:    'linear-gradient(135deg, #3D4E4B, #2C3836)',
-    bird:   'linear-gradient(135deg, #87CEEB, #4682B4)',
-    rabbit: 'linear-gradient(135deg, #DDA0DD, #C71585)',
-    fish:   'linear-gradient(135deg, #87CEEB, #1E90FF)',
-  }
-  return map[type] || 'linear-gradient(135deg, #A9A9A9, #808080)'
-}
-
 const fadeUp = (delay = 0) => ({
-  initial:    { opacity: 0, y: 20 },
-  animate:    { opacity: 1, y: 0  },
-  transition: { duration: 0.4, delay, ease: 'easeOut' },
-})
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.4, delay, ease: "easeOut" },
+});
 
-// ─── Datos mock recordatorios (hasta conectar tabla appointments) ─────────────
+// ─── Mock recordatorios (hasta conectar tabla appointments) ───────────────────
 const reminders = [
-  { month: 'OCT', day: 12, name: 'Vacuna Rabia - Luna',  time: 'En 2 días • 10:30 AM', bg: 'var(--teal-light)',   color: 'var(--teal)'   },
-  { month: 'OCT', day: 15, name: 'Control Dental - Max', time: 'En 5 días • 4:00 PM',  bg: 'var(--orange-light)', color: 'var(--orange)' },
-  { month: 'OCT', day: 20, name: 'Desparasitación',      time: 'Luna & Max',            bg: 'var(--teal-light)',   color: 'var(--teal)'   },
-]
+  {
+    month: "OCT",
+    day: 12,
+    name: "Vacuna Rabia - Luna",
+    time: "En 2 días • 10:30 AM",
+    bg: "var(--teal-light)",
+    color: "var(--teal)",
+  },
+  {
+    month: "OCT",
+    day: 15,
+    name: "Control Dental - Max",
+    time: "En 5 días • 4:00 PM",
+    bg: "var(--orange-light)",
+    color: "var(--orange)",
+  },
+  {
+    month: "OCT",
+    day: 20,
+    name: "Desparasitación",
+    time: "Luna & Max",
+    bg: "var(--teal-light)",
+    color: "var(--teal)",
+  },
+];
 
-// ─── Action cards config ──────────────────────────────────────────────────────
 const ACTION_CARDS = [
-  { bg: '#1D9E75', Icon: CalendarPlus,  title: 'Nueva Cita',            sub: 'Agenda con tu veterinario',   shadow: 'rgba(29,158,117,0.35)', action: null },
-  { bg: '#E07B3F', Icon: PawPrint,      title: 'Añadir Mascota',        sub: 'Registra un nuevo compañero', shadow: 'rgba(224,123,63,0.35)', action: '/pets/add' },
-  { bg: '#3D4E4B', Icon: MessageCircle, title: 'Contactar Veterinario', sub: 'Consulta rápida por chat',    shadow: 'rgba(61,78,75,0.25)',   action: null },
-]
+  {
+    bg: "#1D9E75",
+    Icon: CalendarPlus,
+    title: "Nueva Cita",
+    sub: "Agenda con tu veterinario",
+    shadow: "rgba(29,158,117,0.35)",
+    action: null,
+  },
+  {
+    bg: "#E07B3F",
+    Icon: PawPrint,
+    title: "Añadir Mascota",
+    sub: "Registra un nuevo compañero",
+    shadow: "rgba(224,123,63,0.35)",
+    action: "/pets/add",
+  },
+  {
+    bg: "#3D4E4B",
+    Icon: MessageCircle,
+    title: "Contactar Veterinario",
+    sub: "Consulta rápida por chat",
+    shadow: "rgba(61,78,75,0.25)",
+    action: null,
+  },
+];
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user }   = useAuth()
-  const navigate   = useNavigate()
-  const [pets, setPets]       = useState([])
-  const [loading, setLoading] = useState(true)
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [pets, setPets] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (user) fetchPets() }, [user])
+  useEffect(() => {
+    if (!user) return;
 
-  const fetchPets = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('pets')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-      if (error) throw error
-      setPets(data || [])
-    } catch (err) {
-      console.error('Error cargando mascotas:', err)
-    } finally {
-      setLoading(false)
-    }
-  }
+    const fetchPets = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("pets")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setPets(data || []);
+      } catch (err) {
+        console.error("Error cargando mascotas:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPets();
+  }, [user]);
 
   return (
     <div className="dashboard-wrapper">
-
       {/* ── Contenido principal ─────────────────────────────────── */}
       <div className="dashboard-main">
-
         {/* Action cards */}
         <motion.div
           className="action-grid"
@@ -89,8 +122,14 @@ export default function Dashboard() {
             <motion.button
               key={i}
               className="action-card"
-              style={{ background: card.bg, boxShadow: `0 4px 16px ${card.shadow}` }}
-              variants={{ hidden: { opacity: 0, y: 24 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } }}
+              style={{
+                background: card.bg,
+                boxShadow: `0 4px 16px ${card.shadow}`,
+              }}
+              variants={{
+                hidden: { opacity: 0, y: 24 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+              }}
               onClick={() => card.action && navigate(card.action)}
               whileHover={{ y: -4, boxShadow: `0 12px 28px ${card.shadow}` }}
               whileTap={{ scale: 0.97 }}
@@ -114,71 +153,82 @@ export default function Dashboard() {
           </div>
 
           {/* Loading */}
-          {loading && (
-            <p className="loading-text">Cargando mascotas...</p>
-          )}
+          {loading && <p className="loading-text">Cargando mascotas...</p>}
 
           {/* Empty state */}
           {!loading && pets.length === 0 && (
             <div className="empty-state">
-              <PawPrint size={32} color="var(--gray)" style={{ marginBottom: 12 }} />
-              <p className="empty-state__text">No tienes mascotas registradas</p>
-              <button className="empty-state__btn" onClick={() => navigate('/pets/add')}>
+              <PawPrint
+                size={32}
+                color="var(--gray)"
+                style={{ marginBottom: 12 }}
+              />
+              <p className="empty-state__text">
+                No tienes mascotas registradas
+              </p>
+              <button
+                className="empty-state__btn"
+                onClick={() => navigate("/pets/add")}
+              >
                 Añadir mi primera mascota
               </button>
             </div>
           )}
 
-          {/* Lista */}
-          {!loading && pets.length > 0 && pets.map((pet, i) => (
-            <motion.div
-              key={pet.id}
-              className="pet-card"
-              {...fadeUp(0.3 + i * 0.1)}
-              onClick={() => navigate(`/pets/${pet.id}`)}
-              whileHover={{ y: -2, boxShadow: '0 6px 24px rgba(0,0,0,0.09)' }}
-            >
-              {/* Avatar */}
-              <div className="pet-avatar">
-                {pet.photo_url ? (
-                  <img
-                    src={pet.photo_url}
-                    alt={pet.name}
-                    className="pet-avatar__img"
-                  />
-                ) : (
-                  <div
-                    className="pet-avatar__emoji"
-                    style={{ background: getPetGradient(pet.animal_type) }}
-                  >
-                    {getPetEmoji(pet.animal_type)}
-                  </div>
-                )}
-              </div>
-
-              {/* Info */}
-              <div className="pet-info">
-                <p className="pet-info__name">{pet.name}</p>
-                <p className="pet-info__breed">
-                  {pet.breed || pet.animal_type}
-                  {pet.birth_date && ` · ${new Date().getFullYear() - new Date(pet.birth_date).getFullYear()} años`}
-                </p>
-                <div className="pet-info__stats">
-                  <span className="pet-info__stat">
-                    <Heart size={12} color="var(--teal)" />
-                    {pet.medical_conditions ? 'Con condiciones' : 'Salud Ok'}
-                  </span>
-                  {pet.sex && (
-                    <span className="pet-info__stat">
-                      {pet.sex === 'male' ? '♂ Macho' : '♀ Hembra'}
-                    </span>
+          {/* Lista de mascotas */}
+          {!loading &&
+            pets.length > 0 &&
+            pets.map((pet, i) => (
+              <motion.div
+                key={pet.id}
+                className="pet-card"
+                {...fadeUp(0.3 + i * 0.1)}
+                onClick={() => navigate(`/pets/${pet.id}`)}
+                whileHover={{ y: -2, boxShadow: "0 6px 24px rgba(0,0,0,0.09)" }}
+              >
+                {/* Avatar */}
+                <div className="pet-avatar">
+                  {pet.photo_url ? (
+                    <img
+                      src={pet.photo_url}
+                      alt={pet.name}
+                      className="pet-avatar__img"
+                    />
+                  ) : (
+                    <div
+                      className="pet-avatar__emoji"
+                      style={{ background: animalGradient(pet.animal_type) }}
+                    >
+                      {animalEmoji(pet.animal_type)}
+                    </div>
                   )}
                 </div>
-              </div>
 
-              <ChevronRight size={16} color="var(--gray)" />
-            </motion.div>
-          ))}
+                {/* Info */}
+                <div className="pet-info">
+                  <p className="pet-info__name">{pet.name}</p>
+                  <p className="pet-info__breed">
+                    {pet.breed
+                      ? `${pet.breed} · ${animalTypeLabel(pet.animal_type)}`
+                      : animalTypeLabel(pet.animal_type)}
+                    {pet.birth_date && ` · ${calcAge(pet.birth_date)}`}
+                  </p>
+                  <div className="pet-info__stats">
+                    <span className="pet-info__stat">
+                      <Heart size={12} color="var(--teal)" />
+                      {pet.medical_conditions ? "Con condiciones" : "Salud Ok"}
+                    </span>
+                    {pet.sex && (
+                      <span className="pet-info__stat">
+                        {sexLabel(pet.sex)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <ChevronRight size={16} color="var(--gray)" />
+              </motion.div>
+            ))}
         </motion.div>
       </div>
 
@@ -203,7 +253,12 @@ export default function Dashboard() {
               transition={{ delay: 0.3 + i * 0.08 }}
             >
               <div className="reminder-date" style={{ background: r.bg }}>
-                <span className="reminder-date__month" style={{ color: r.color }}>{r.month}</span>
+                <span
+                  className="reminder-date__month"
+                  style={{ color: r.color }}
+                >
+                  {r.month}
+                </span>
                 <span className="reminder-date__day">{r.day}</span>
               </div>
               <div className="flex-1">
@@ -212,13 +267,17 @@ export default function Dashboard() {
                   <Clock size={10} /> {r.time}
                 </p>
               </div>
-              <MoreVertical size={15} color="var(--gray)" className="cursor-pointer" />
+              <MoreVertical
+                size={15}
+                color="var(--gray)"
+                className="cursor-pointer"
+              />
             </motion.div>
           ))}
 
           <motion.span
             className="reminder-manage"
-            whileHover={{ color: 'var(--teal)' }}
+            whileHover={{ color: "var(--teal)" }}
           >
             Gestionar Calendario
           </motion.span>
@@ -236,7 +295,8 @@ export default function Dashboard() {
             <span className="tip-card__title">Tip de Salud</span>
           </div>
           <p className="tip-card__text">
-            ¿Sabías que mantener los dientes de tus mascotas limpios puede añadir hasta 2 años a su vida?
+            ¿Sabías que mantener los dientes de tus mascotas limpios puede
+            añadir hasta 2 años a su vida?
           </p>
           <motion.span className="tip-card__link" whileHover={{ gap: 6 }}>
             Leer artículo <ChevronRight size={13} />
@@ -244,5 +304,5 @@ export default function Dashboard() {
         </motion.div>
       </motion.aside>
     </div>
-  )
+  );
 }

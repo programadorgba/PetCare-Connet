@@ -11,13 +11,17 @@ import {
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { ANIMAL_TYPE_OPTIONS, SEX_OPTIONS } from '../utils/petMaps'
 import './AddPet.css'
 
 // ─── Validación Zod ───────────────────────────────────────────────────────────
+const ANIMAL_VALUES = ANIMAL_TYPE_OPTIONS.map(o => o.value)
+const SEX_VALUES    = SEX_OPTIONS.map(o => o.value)
+
 const petSchema = z.object({
   name:               z.string().min(1, 'El nombre es obligatorio').max(50),
-  animal_type:        z.string().min(1, 'Indica el tipo de animal').max(50),
-  sex:                z.string().min(1, 'Selecciona el sexo'),
+  animal_type:        z.enum(ANIMAL_VALUES, { errorMap: () => ({ message: 'Selecciona el tipo de animal' }) }),
+  sex:                z.enum(SEX_VALUES,    { errorMap: () => ({ message: 'Selecciona el sexo' }) }),
   breed:              z.string().max(60).optional(),
   birth_date:         z.string().optional(),
   chip_number:        z.string().max(20).optional(),
@@ -83,7 +87,10 @@ export default function AddPet() {
   const handlePhoto = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (file.size > 5 * 1024 * 1024) { setSaveError('La foto no puede superar 5 MB'); return }
+    if (file.size > 5 * 1024 * 1024) {
+      setSaveError('La foto no puede superar 5 MB')
+      return
+    }
     setPhotoFile(file)
     setPhotoPreview(URL.createObjectURL(file))
   }
@@ -100,7 +107,9 @@ export default function AddPet() {
     if (!photoFile) return null
     const ext  = photoFile.name.split('.').pop()
     const path = `${user.id}/${petId}.${ext}`
-    const { error } = await supabase.storage.from('pets').upload(path, photoFile, { upsert: true })
+    const { error } = await supabase.storage
+      .from('pets')
+      .upload(path, photoFile, { upsert: true })
     if (error) throw new Error('Error al subir la foto: ' + error.message)
     const { data } = supabase.storage.from('pets').getPublicUrl(path)
     return data.publicUrl
@@ -116,7 +125,7 @@ export default function AddPet() {
         .insert({
           user_id:            user.id,
           name:               formData.name.trim(),
-          animal_type:        formData.animal_type.trim(),
+          animal_type:        formData.animal_type,
           sex:                formData.sex,
           breed:              formData.breed?.trim()              || null,
           birth_date:         formData.birth_date                 || null,
@@ -138,6 +147,7 @@ export default function AddPet() {
 
       setSuccess(true)
       setTimeout(() => navigate('/dashboard'), 1800)
+
     } catch (err) {
       setSaveError(err.message || 'Error al guardar la mascota')
     } finally {
@@ -184,7 +194,7 @@ export default function AddPet() {
           <motion.button
             whileHover={{ x: -3 }} whileTap={{ scale: 0.95 }}
             onClick={() => navigate('/dashboard')}
-            className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer"
+            className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer flex-shrink-0"
             style={{ background: 'var(--white)', border: '1px solid var(--border)', color: 'var(--slate)' }}
           >
             <ChevronLeft size={18} />
@@ -240,7 +250,7 @@ export default function AddPet() {
           className="pet-card"
         >
 
-          {/* ── PASO 1 ── */}
+          {/* ── PASO 1: Datos básicos ─────────────────────────────── */}
           {step === 1 && (
             <div>
               <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
@@ -255,18 +265,28 @@ export default function AddPet() {
                       ? <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
                       : <>
                           <Camera size={24} color="var(--teal)" />
-                          <span className="text-xs mt-1 font-semibold" style={{ color: 'var(--teal)' }}>Foto</span>
+                          <span className="text-xs mt-1 font-semibold" style={{ color: 'var(--teal)' }}>
+                            Foto
+                          </span>
                         </>
                     }
                   </div>
                   {photoPreview && (
-                    <button type="button" className="photo-delete"
-                      onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}>
+                    <button
+                      type="button"
+                      className="photo-delete"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null) }}
+                    >
                       <X size={11} />
                     </button>
                   )}
-                  <input ref={fileInputRef} type="file" accept="image/*"
-                    onChange={handlePhoto} className="hidden" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhoto}
+                    className="hidden"
+                  />
                 </div>
               </div>
 
@@ -274,31 +294,37 @@ export default function AddPet() {
               <Field label="Nombre *" error={errors.name?.message}>
                 <input
                   {...register('name')}
-                  type="text" placeholder="Ej: Luna"
+                  type="text"
+                  placeholder="Ej: Luna"
                   className={`pet-input ${errors.name ? 'error' : ''}`}
                 />
               </Field>
 
-              {/* Tipo de animal — texto libre */}
+              {/* Tipo de animal — dropdown */}
               <Field label="Tipo de animal *" error={errors.animal_type?.message}>
-                <input
+                <select
                   {...register('animal_type')}
-                  type="text"
-                  placeholder="Ej: Perro, Gato, Serpiente, Tortuga..."
                   className={`pet-input ${errors.animal_type ? 'error' : ''}`}
-                />
+                  defaultValue=""
+                >
+                  <option value="" disabled>Selecciona un tipo...</option>
+                  {ANIMAL_TYPE_OPTIONS.map(({ value, label, emoji }) => (
+                    <option key={value} value={value}>
+                      {emoji} {label}
+                    </option>
+                  ))}
+                </select>
               </Field>
 
               {/* Sexo */}
               <Field label="Sexo *" error={errors.sex?.message}>
                 <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: 'male',   label: 'Macho',  symbol: '♂' },
-                    { value: 'female', label: 'Hembra', symbol: '♀' },
-                  ].map(({ value, label, symbol }) => (
+                  {SEX_OPTIONS.map(({ value, label, symbol }) => (
                     <motion.button
-                      key={value} type="button"
-                      whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+                      key={value}
+                      type="button"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.97 }}
                       onClick={() => setValue('sex', value, { shouldValidate: true })}
                       className={`sex-btn ${selectedSex === value ? 'selected' : ''}`}
                     >
@@ -313,7 +339,8 @@ export default function AddPet() {
               <Field label="Raza" hint="(opcional)">
                 <input
                   {...register('breed')}
-                  type="text" placeholder="Ej: Golden Retriever"
+                  type="text"
+                  placeholder="Ej: Golden Retriever"
                   className="pet-input"
                 />
               </Field>
@@ -322,8 +349,11 @@ export default function AddPet() {
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Fecha de nacimiento" hint="(aprox.)">
                   <div className="relative">
-                    <Calendar size={15} color="var(--gray)"
-                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Calendar
+                      size={15}
+                      color="var(--gray)"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
                     <input
                       {...register('birth_date')}
                       type="date"
@@ -333,11 +363,15 @@ export default function AddPet() {
                 </Field>
                 <Field label="Nº de chip" hint="(opcional)">
                   <div className="relative">
-                    <Hash size={15} color="var(--gray)"
-                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    <Hash
+                      size={15}
+                      color="var(--gray)"
+                      className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+                    />
                     <input
                       {...register('chip_number')}
-                      type="text" placeholder="123456789"
+                      type="text"
+                      placeholder="123456789"
                       className="pet-input pet-input-icon"
                     />
                   </div>
@@ -346,7 +380,7 @@ export default function AddPet() {
             </div>
           )}
 
-          {/* ── PASO 2 ── */}
+          {/* ── PASO 2: Salud ─────────────────────────────────────── */}
           {step === 2 && (
             <div>
               <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
@@ -380,7 +414,7 @@ export default function AddPet() {
             </div>
           )}
 
-          {/* ── PASO 3 ── */}
+          {/* ── PASO 3: Notas ─────────────────────────────────────── */}
           {step === 3 && (
             <div>
               <h2 className="text-base font-bold mb-6" style={{ color: 'var(--slate-dark)' }}>
@@ -397,7 +431,7 @@ export default function AddPet() {
               </Field>
 
               {/* Info documentos */}
-              <div className="info-box mb-2">
+              <div className="info-box mb-4">
                 <Upload size={18} color="var(--teal)" className="flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-sm font-semibold m-0 mb-0.5" style={{ color: 'var(--teal)' }}>
@@ -415,11 +449,11 @@ export default function AddPet() {
                   Resumen
                 </p>
                 {[
-                  { label: 'Nombre',  value: watch('name')        },
-                  { label: 'Animal',  value: watch('animal_type') },
-                  { label: 'Sexo',    value: watch('sex') === 'male' ? 'Macho ♂' : watch('sex') === 'female' ? 'Hembra ♀' : '' },
-                  { label: 'Raza',    value: watch('breed')       },
-                  { label: 'Foto',    value: photoFile ? '✅ Añadida' : ''  },
+                  { label: 'Nombre',  value: watch('name') },
+                  { label: 'Animal',  value: ANIMAL_TYPE_OPTIONS.find(o => o.value === watch('animal_type'))?.label },
+                  { label: 'Sexo',    value: SEX_OPTIONS.find(o => o.value === watch('sex'))?.label },
+                  { label: 'Raza',    value: watch('breed') },
+                  { label: 'Foto',    value: photoFile ? '✅ Añadida' : '' },
                 ].filter(r => r.value).map(({ label, value }) => (
                   <div key={label} className="summary-row">
                     <span style={{ color: 'var(--gray)' }}>{label}</span>
@@ -434,7 +468,9 @@ export default function AddPet() {
           <AnimatePresence>
             {saveError && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
                 className="error-banner"
               >
                 <AlertCircle size={15} color="var(--red)" /> {saveError}
@@ -443,11 +479,14 @@ export default function AddPet() {
           </AnimatePresence>
 
           {/* Navegación */}
-          <div className="flex justify-between items-center mt-7 pt-5"
-            style={{ borderTop: '1px solid #F0F4F2' }}>
-
+          <div
+            className="flex justify-between items-center mt-7 pt-5"
+            style={{ borderTop: '1px solid #F0F4F2' }}
+          >
             {step > 1 ? (
-              <motion.button type="button" whileHover={{ x: -2 }} whileTap={{ scale: 0.97 }}
+              <motion.button
+                type="button"
+                whileHover={{ x: -2 }} whileTap={{ scale: 0.97 }}
                 onClick={() => setStep(s => s - 1)}
                 className="btn-prev"
               >
@@ -456,7 +495,9 @@ export default function AddPet() {
             ) : <div />}
 
             {step < STEPS.length ? (
-              <motion.button type="button" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                 onClick={nextStep}
                 className="btn-next"
               >
@@ -464,7 +505,8 @@ export default function AddPet() {
               </motion.button>
             ) : (
               <motion.button
-                type="button" disabled={saving}
+                type="button"
+                disabled={saving}
                 whileHover={{ scale: saving ? 1 : 1.02 }}
                 whileTap={{ scale: saving ? 1 : 0.97 }}
                 onClick={handleSubmit(onSubmit)}

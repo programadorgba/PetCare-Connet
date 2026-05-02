@@ -2,33 +2,32 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  ChevronLeft, PawPrint, Dog, Cat, Bird, Rabbit, Fish,
-  Heart, FileText, Edit, Trash2, Loader2, AlertCircle,
+  ChevronLeft, PawPrint, Heart, FileText,
+  Edit, Trash2, Loader2, AlertCircle,
 } from 'lucide-react'
 import { supabase } from '../lib/supabaseClient'
 import { useAuth } from '../context/AuthContext'
+import { animalTypeLabel, animalEmoji, animalGradient, sexLabel, calcAge } from '../utils/petMaps'
 import './PetDetail.css'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const ANIMAL_ICONS = { dog: Dog, cat: Cat, bird: Bird, rabbit: Rabbit, fish: Fish }
-
+// ─── Pasos / tabs ─────────────────────────────────────────────────────────────
 const TABS = [
   { id: 'basic',  label: 'Datos', Icon: PawPrint  },
   { id: 'health', label: 'Salud', Icon: Heart     },
   { id: 'docs',   label: 'Docs',  Icon: FileText  },
 ]
 
-function calcAge(birthDate) {
-  if (!birthDate) return null
-  const years = Math.floor((Date.now() - new Date(birthDate)) / (1000 * 60 * 60 * 24 * 365.25))
-  return years === 1 ? '1 año' : `${years} años`
+
+function formatDate(d) {
+  if (!d) return null
+  return new Date(d).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })
 }
 
 // ─── Sub-componentes ──────────────────────────────────────────────────────────
 function Field({ label, value, empty = '—' }) {
   return (
     <div className="petdetail-field">
-      <span className="petdetail-field__label">{label}</span>
+      {label && <span className="petdetail-field__label">{label}</span>}
       <span className="petdetail-field__value">{value || empty}</span>
     </div>
   )
@@ -45,27 +44,33 @@ function Section({ title, children }) {
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 export default function PetDetail() {
-  const { id }     = useParams()
-  const navigate   = useNavigate()
-  const { user }   = useAuth()
+  const { id }   = useParams()
+  const navigate = useNavigate()
+  const { user } = useAuth()
 
-  const [pet, setPet]           = useState(null)
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
+  const [pet, setPet]             = useState(null)
+  const [loading, setLoading]     = useState(true)
+  const [error, setError]         = useState('')
   const [activeTab, setActiveTab] = useState('basic')
-  const [deleting, setDeleting] = useState(false)
+  const [deleting, setDeleting]   = useState(false)
 
-  useEffect(() => { fetchPet() }, [id])
+useEffect(() => {
+  if (!user) return
 
   const fetchPet = async () => {
     setLoading(true)
     setError('')
     try {
       const { data, error } = await supabase
-        .from('pets').select('*').eq('id', id).single()
+        .from('pets')
+        .select('*')
+        .eq('id', id)
+        .single()
+
       if (error) throw new Error(error.message)
       if (!data) throw new Error('Mascota no encontrada')
-      if (data.user_id !== user.id) throw new Error('No tienes acceso a esta mascota')
+      if (data.user_id !== user.id) throw new Error('No tienes acceso')
+
       setPet(data)
     } catch (err) {
       setError(err.message)
@@ -73,6 +78,9 @@ export default function PetDetail() {
       setLoading(false)
     }
   }
+
+  fetchPet()
+}, [id, user])
 
   const handleDelete = async () => {
     if (!confirm('¿Seguro que quieres eliminar esta mascota? Esta acción no se puede deshacer.')) return
@@ -110,8 +118,7 @@ export default function PetDetail() {
     )
   }
 
-  const AnimalIcon = ANIMAL_ICONS[pet.animal_type] || PawPrint
-  const hasDocs    = pet.medical_documents?.length > 0
+  const hasDocs = pet.medical_documents?.length > 0
 
   return (
     <div className="petdetail-wrapper">
@@ -134,15 +141,19 @@ export default function PetDetail() {
             {pet.photo_url ? (
               <img src={pet.photo_url} alt={pet.name} className="petdetail-avatar-img" />
             ) : (
-              <div className="petdetail-avatar-icon">
-                <AnimalIcon size={24} color="var(--teal)" />
+              <div
+                className="petdetail-avatar-icon"
+                style={{ background: animalGradient(pet.animal_type) }}
+              >
+                <span style={{ fontSize: 26 }}>{animalEmoji(pet.animal_type)}</span>
               </div>
             )}
             <div>
               <h1 className="petdetail-name">{pet.name}</h1>
               <p className="petdetail-breed">
-                {pet.breed || pet.animal_type}
-                {pet.sex && ` · ${pet.sex === 'male' ? '♂ Macho' : '♀ Hembra'}`}
+                {animalTypeLabel(pet.animal_type)}
+                {pet.breed && ` · ${pet.breed}`}
+                {pet.sex && ` · ${sexLabel(pet.sex)}`}
                 {pet.birth_date && ` · ${calcAge(pet.birth_date)}`}
               </p>
             </div>
@@ -167,7 +178,7 @@ export default function PetDetail() {
           ))}
         </motion.div>
 
-        {/* ── Contenido ──────────────────────────────────────────── */}
+        {/* ── Contenido tabs ──────────────────────────────────────── */}
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -181,12 +192,12 @@ export default function PetDetail() {
             {activeTab === 'basic' && (
               <Section title="Información general">
                 <div className="petdetail-fields-grid">
-                  <Field label="Nombre"     value={pet.name}        />
-                  <Field label="Tipo"       value={pet.animal_type} />
-                  <Field label="Raza"       value={pet.breed}       />
-                  <Field label="Edad"       value={calcAge(pet.birth_date)} />
-                  <Field label="Sexo"       value={pet.sex === 'male' ? '♂ Macho' : pet.sex === 'female' ? '♀ Hembra' : null} />
-                  <Field label="Nacimiento" value={pet.birth_date ? new Date(pet.birth_date).toLocaleDateString('es-ES') : null} />
+                  <Field label="Nombre"           value={pet.name} />
+                  <Field label="Tipo de animal"   value={animalTypeLabel(pet.animal_type)} />
+                  <Field label="Raza"             value={pet.breed} />
+                  <Field label="Sexo"             value={sexLabel(pet.sex)} />
+                  <Field label="Fecha nacimiento" value={formatDate(pet.birth_date)} />
+                  <Field label="Edad"             value={calcAge(pet.birth_date)} />
                 </div>
                 <Field label="Número de chip" value={pet.chip_number} />
               </Section>
@@ -228,8 +239,7 @@ export default function PetDetail() {
                     <FileText size={32} color="var(--gray)" className="mx-auto mb-3" />
                     <p className="petdetail-docs-empty__text">No hay documentos subidos todavía</p>
                     <p className="petdetail-docs-empty__hint">
-                      Podrás subir analíticas, radiografías y certificados<br />
-                      desde aquí próximamente
+                      Podrás subir analíticas, radiografías y certificados próximamente
                     </p>
                   </div>
                 )}
